@@ -1,39 +1,77 @@
-# Activity Monitoring Prediction
-Paul Clark  
+# Machine Learning Exercise: Performance Evaluation of Activity Execution
+clarpaul  
 April 15, 2017  
 
 
 
-## R Markdown
+# Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Using wearable devices like Fitbit, large amounts of data on personal activity can be collected  inexpensively. The goal of this project is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to ascertain the **manner** in which they performed activities - specifically, whether they did barbell lifts correctly or in one of 4 incorrect manners. More info is available here: <<http://groupware.les.inf.puc-rio.br/har>> (see the section on the *Weight Lifting Exercise Dataset*, where a paper can be downloaded [@Velloso2013]).  Note that the dataset is licensed under the Creative Commons license (CC BY-SA): it can be used for any purpose as long as the original authors are cited.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# Objectives
+  
 
+  *  Given the training data, build a model to recognize the manner (`classe`) in which each of the 6 participants did each exercise
+  * In particular, predict the `classe` values of the 20 unlabeled observations in the `testing` data, achieving at least 80% accuracy
+  *  Report on key model-building elements
+     * Model building
+     * Cross validation
+     * Expected out-of-sample error
+     * Rationale for key choices
+     
+# Preparation
 
-```r
-summary(cars)
-```
+## Data Retrieval
 
-```
-##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
+Data obtained 4/16/17. We load it using package `readr`.  
 
 ```r
-plot(pressure)
+trainingdata <- file.path(getwd(), "training.csv")
+testingdata <- file.path(getwd(), "testing.csv")
+if (!file.exists("training.csv")){
+        download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
+        "training.csv")
+}
+if (!file.exists("testing.csv")){
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",
+              "testing.csv")
+}
+if (!"readr" %in% rownames(installed.packages())) install.packages("readr")
+library(readr)
+colspec <- list(user_name = col_factor(levels =
+                c("adelmo","carlitos","charles","eurico","jeremy","pedro")), 
+                classe = col_factor(levels = c("A","B","C","D","E")))
+# guess_max set at 6000 to capture decimal values first occurring after row 1000
+training <- read_csv("training.csv", na = c("","NA","#DIV/0!"), col_types = colspec, guess_max = 6000)
+testing <- read_csv("testing.csv", na = c("","NA","#DIV/0!"), col_types = colspec)
 ```
+## Pre-Processing
 
-![](index_files/figure-html/pressure-1.png)<!-- -->
+We use the `str()` function to examine the data. It is omitted here due to length (the training data has 160 predictors and 19622 observations).
 
-A slight change was just made - now the code for the plot is to be shown.
+```r
+str(training, list.len = ncol(training), give.attr = FALSE)
+str(testing, list.len = ncol(testing), give.attr = FALSE)
+```
+Summary features for each time window (those beginning with "`avg_`", "`stddev_`", "`kurtosis_`", "`skewness_`", etc.) are very sparsely populated in the training data and unused in the testing data, therefore must be excluded. Additionally, no rows with `new_window == 'yes'` appear in the test set, so these should also be excluded. Finally, we see no way to make use of the "`_timestamp_`" or "`_window`" information in the test data, therefore we exclude it, too.
+
+```r
+if (!"dplyr" %in% rownames(installed.packages())) install.packages("dplyr")
+library(dplyr)
+
+training <- filter(training, new_window != "yes") %>%
+        select(-c(X1, raw_timestamp_part_1:num_window, starts_with("avg"),
+               starts_with("stddev"),starts_with("kurt"),starts_with("skew"),
+               starts_with("max"),starts_with("min"),starts_with("amplitude"),
+               starts_with("var")))
+
+testing <- select(testing, -c(X1, raw_timestamp_part_1:num_window, starts_with("avg"),
+               starts_with("stddev"),starts_with("kurt"),starts_with("skew"),
+               starts_with("max"),starts_with("min"),starts_with("amplitude"),
+               starts_with("var")))
+```
+  
+
+# Bibliography
+  
+  
