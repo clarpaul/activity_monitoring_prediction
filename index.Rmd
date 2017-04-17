@@ -1,11 +1,11 @@
 ---
-title: "Machine Learning Exercise: Performance Evaluation of Activity Execution"
-author: "clarpaul"
+title: "Machine Learning Exercise: Human Activity Performance Evaluation"
+author: "Paul Clark"
 date: "April 15, 2017"
 output: 
   html_document: 
     keep_md: yes
-    number_sections: yes
+    number_sections: no
 bibliography: project_references.bibtex
 ---
 
@@ -15,27 +15,29 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-Using wearable devices like Fitbit, large amounts of data on personal activity can be collected  inexpensively. The goal of this project is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to ascertain the **manner** in which they performed activities - specifically, whether they did barbell lifts correctly or in one of 4 incorrect manners. More info is available here: <<http://groupware.les.inf.puc-rio.br/har>> (see the section on the *Weight Lifting Exercise Dataset*, where a paper can be downloaded [@Velloso2013]).  Note that the dataset is licensed under the Creative Commons license (CC BY-SA): it can be used for any purpose as long as the original authors are cited.
+### Background
 
-# Objectives
+Using wearable devices like Fitbit, large amounts of data on personal activity can be collected  inexpensively. The goal of this exercise is to use data from motion sensors on the belt, forearm, arm, and dumbbell of 6 participants to reliably recognize the manner in which they performed dumbbell lifts: specifically, whether they did a particular sort of lift correctly ("A"), or did it in one of 4 incorrect ways ("B" through "D"). More information and data is available here: <http://groupware.les.inf.puc-rio.br/har>. See the section on the _**Weight Lifting Exercise Dataset**_, [@Velloso2013].  All the data here is licensed under Creative Commons (CC BY-SA): it can be used for any purpose as long as the original authors are cited.
+
+### Objectives
   
+  *  Given training data extracted from the original study, build a model to recognize, based on sensor data, the manner (`classe`) in which each of the 6 participants did any given barbell lift
+  * In particular, predict the values (A through D) of 20 unlabeled observations in a testing dataset. Achieve at least 80% accuracy to pass the exercise.
 
-  *  Given the training data, build a model to recognize the manner (`classe`) in which each of the 6 participants did each exercise
-  * In particular, predict the `classe` values of the 20 unlabeled observations in the `testing` data, achieving at least 80% accuracy
-  *  Report on key model-building elements
-     * Model building
-     * Cross validation
-     * Expected out-of-sample error
-     * Rationale for key choices
+### Report
+
+This report describes key steps in the analysis, including rationale for key choices.  Featured elements include:
+
+  * Model building
+  * Model validation
+  * Expected out-of-sample error
      
 # Preparation
 
-## Data Retrieval
+### Data Retrieval
 
-Data obtained 4/16/17. We load it using package `readr`.  
+Data was obtained via the links below on 4/16/17. We load it using package `readr`.  
 ```{r load_data, message=FALSE, warning=FALSE, cache=TRUE}
-trainingdata <- file.path(getwd(), "training.csv")
-testingdata <- file.path(getwd(), "testing.csv")
 if (!file.exists("training.csv")){
         download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
         "training.csv")
@@ -46,23 +48,25 @@ download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.c
 }
 if (!"readr" %in% rownames(installed.packages())) install.packages("readr")
 library(readr)
+
 colspec <- list(user_name = col_factor(levels =
                 c("adelmo","carlitos","charles","eurico","jeremy","pedro")), 
                 classe = col_factor(levels = c("A","B","C","D","E")))
+
 # guess_max set at 6000 to capture decimal values first occurring after row 1000
 training <- read_csv("training.csv", na = c("","NA","#DIV/0!"), col_types = colspec, guess_max = 6000)
 testing <- read_csv("testing.csv", na = c("","NA","#DIV/0!"), col_types = colspec)
 
 ```
-## Pre-Processing
+### Data Pre-processing
 
-We use the `str()` function to examine the data. It is omitted here due to length (the training data has `r length(training)` predictors and `r nrow(training)` observations).
-```{r eval=FALSE}
+We use the `str()` function to examine the data. The summary is omitted here due to length: the training data has `r length(training)` predictors and `r nrow(training)` observations.
+```{r examine_data, eval=FALSE}
 str(training, list.len = ncol(training), give.attr = FALSE)
 str(testing, list.len = ncol(testing), give.attr = FALSE)
 ```
-Summary features for each time window (those beginning with "`avg_`", "`stddev_`", "`kurtosis_`", "`skewness_`", etc.) are very sparsely populated in the training data and unused in the testing data, therefore must be excluded. Additionally, no rows with `new_window == 'yes'` appear in the test set, so these should also be excluded. Finally, we see no way to make use of the "`_timestamp_`" or "`_window`" information in the test data, therefore we exclude it, too.
-```{r message=FALSE}
+In the original analysis, raw sensor signals were sampled at 45 Hz over windows of time from 0.5 to 2.5 seconds. Summary "features" (variable names in the dataset beginning with "`avg_`", "`stddev_`", "`kurtosis_`", "`skewness_`", etc.) were computed in post-processing of signals over each window. Both features and signals are provided in the training data, but the features are not provided in the test data.  Therefore, the features are not useful for prediction on the test set and are excluded from the modelling. Additionally, no rows with `new_window == 'yes'`, which contain the computed features, appear in the test set, so these are also excluded. Finally, in the absence of contextual documentation, we see no way to make use of the "`_timestamp_`" or "`_window`" information in predicting test labels, therefore we exclude it, too.  We use package `dplyr` to filter out the unneeded information.
+```{r remove_variables, message=FALSE}
 if (!"dplyr" %in% rownames(installed.packages())) install.packages("dplyr")
 library(dplyr)
 
@@ -78,7 +82,62 @@ testing <- select(testing, -c(X1, raw_timestamp_part_1:num_window, starts_with("
                starts_with("var")))
 
 ```
+
+After the exclusions, we are left with `r length(training) - 1`  potential predictors.  
+```{r list_variable_names}
+names(training)[-length(training)]
+```
+
+# Validation strategy
+
+Based on the training data, we create a validation partition with which to assess performance.  The `caret` package produces a partition stratified with respect to the 5 `classe` outcomes. Note that `caret` requires the `lattice` and `ggplot2` packages, by default.
+```{r create_validation_set, message=FALSE}
+if (!"caret" %in% rownames(installed.packages())) install.packages("caret")
+if (!"lattice" %in% rownames(installed.packages())) install.packages("lattice")
+if (!"ggplot2" %in% rownames(installed.packages())) install.packages("ggplot2")
+library(caret)
+
+set.seed(1)
+inTrain <- createDataPartition(y = training$classe, p = 0.7, list = FALSE)
+Train <- training[inTrain,]
+Validation <- training[-inTrain,]
+
+```
   
+  
+# Model Building
+  
+Following the authors of the original paper, we attempt prediction based on random forests.  Note that the formula interface for `randomForest()` is not used, as it generates high overhead when there are many variables, and that minimum `nodesize` is set to 10 (the default is 1).  These steps were taken to make run times feasible.  Below, the cumulative out-of-bag error is shown for every 20 trees, indicating that model performance is adequate by 500 (the default). 
+```{r compute_model, cache = TRUE, message=FALSE}
+if (!"randomForest" %in% rownames(installed.packages())) install.packages("randomForest")
+library(randomForest)
+set.seed(921)
+rfMod <- randomForest(x=Train[,-54], y=Train$classe, method = "rf", 
+                      proximity = FALSE, nodesize = 10, do.trace = 20)
+
+```
+
+We next compute the confusion matrix and associated statistics on the validation set.  Performance appears quite good:
+
+```{r conf_matrix}
+rfPred <- randomForest:::predict.randomForest(rfMod, newdata = Validation[,-54], type = "response")
+rfConf <- confusionMatrix(rfPred, Validation$classe)
+rfConf
+```
+
+Finally, we compute the predicted values for the unlabeled testing data, which are kept hidden due to the plagiarism policy.
+
+```{r testing_labels, eval=FALSE}
+randomForest:::predict.randomForest(rfMod, newdata = testing, type = "response")
+```
+
+# Out-of-sample error
+
+Based on the above, we expect an out-of-sample error rate of **`r round(100*(1-rfConf$overall[[1]]),2)`%**.  Note that this error rate is slightly higher than the 'out-of-bag' estimate of 0.69% from model training.  This is probably just a statistical fluctuation: the difference is inside the 95% confidence interval provided in the confusion matrix results.
+
+# Conclusions
+
+The method above provides high same-person recognition performance.  However, a training period is required on a person-by-person basis.  "Leave-one-participant-out" performance has not been evaluated here.
 
 # Bibliography
   
