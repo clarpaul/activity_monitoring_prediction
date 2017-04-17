@@ -1,4 +1,4 @@
-# Machine Learning Exercise: Human Activity Performance Evaluation
+# Machine Learning: Human Activity Performance Evaluation
 Paul Clark  
 April 15, 2017  
 
@@ -13,7 +13,7 @@ Using wearable devices like Fitbit, large amounts of data on personal activity c
 ### Objectives
   
   *  Given training data extracted from the original study, build a model to recognize, based on sensor data, the manner (`classe`) in which each of the 6 participants did any given barbell lift
-  * In particular, predict the values (A through D) of 20 unlabeled observations in a testing dataset. Achieve at least 80% accuracy to pass the exercise.
+  * In particular, predict the values (A through D) of 20 unlabeled observations in a testing dataset.
 
 ### Report
 
@@ -31,18 +31,15 @@ Data was obtained via the links below on 4/16/17. We load it using package `read
 
 ```r
 if (!file.exists("training.csv")){
-        download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
-        "training.csv")
+        download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "training.csv")
 }
 if (!file.exists("testing.csv")){
-download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",
-              "testing.csv")
+        download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", "testing.csv")
 }
 if (!"readr" %in% rownames(installed.packages())) install.packages("readr")
 library(readr)
 
-colspec <- list(user_name = col_factor(levels =
-                c("adelmo","carlitos","charles","eurico","jeremy","pedro")), 
+colspec <- list(user_name = col_factor(levels = c("adelmo","carlitos","charles","eurico","jeremy","pedro")), 
                 classe = col_factor(levels = c("A","B","C","D","E")))
 
 # guess_max set at 6000 to capture decimal values first occurring after row 1000
@@ -65,14 +62,12 @@ library(dplyr)
 
 training <- filter(training, new_window != "yes") %>%
         select(-c(X1, raw_timestamp_part_1:num_window, starts_with("avg"),
-               starts_with("stddev"),starts_with("kurt"),starts_with("skew"),
-               starts_with("max"),starts_with("min"),starts_with("amplitude"),
-               starts_with("var")))
+               starts_with("stddev"),starts_with("kurt"),starts_with("skew"),starts_with("max"),
+               starts_with("min"),starts_with("amplitude"),starts_with("var")))
 
 testing <- select(testing, -c(X1, raw_timestamp_part_1:num_window, starts_with("avg"),
-               starts_with("stddev"),starts_with("kurt"),starts_with("skew"),
-               starts_with("max"),starts_with("min"),starts_with("amplitude"),
-               starts_with("var")))
+               starts_with("stddev"),starts_with("kurt"),starts_with("skew"),starts_with("max"),
+               starts_with("min"),starts_with("amplitude"),starts_with("var")))
 ```
 
 After the exclusions, we are left with 53  potential predictors.  
@@ -127,8 +122,7 @@ Following the authors of the original paper, we attempt prediction based on rand
 if (!"randomForest" %in% rownames(installed.packages())) install.packages("randomForest")
 library(randomForest)
 set.seed(921)
-rfMod <- randomForest(x=Train[,-54], y=Train$classe, method = "rf", 
-                      proximity = FALSE, nodesize = 10, do.trace = 20)
+rfMod <- randomForest(x=Train[,-54], y=Train$classe, proximity = FALSE, nodesize = 10, do.trace = 20)
 ```
 
 ```
