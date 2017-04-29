@@ -11,7 +11,7 @@
 
 <meta name="author" content="Paul Clark" />
 
-<meta name="date" content="2017-04-15" />
+<meta name="date" content="2017-04-29" />
 
 <title>Machine Learning: Human Activity Performance Evaluation</title>
 
@@ -119,7 +119,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Machine Learning: Human Activity Performance Evaluation</h1>
 <h4 class="author"><em>Paul Clark</em></h4>
-<h4 class="date"><em>April 15, 2017</em></h4>
+<h4 class="date"><em>April 29, 2017</em></h4>
 
 </div>
 
@@ -127,20 +127,23 @@ $(document).ready(function () {
 <ul>
 <li><a href="#introduction">Introduction</a><ul>
 <li><a href="#background">Background</a></li>
-<li><a href="#objectives">Objectives</a></li>
+<li><a href="#main-objectives">Main Objectives</a></li>
 <li><a href="#report">Report</a></li>
-<li><a href="#conclusions">Conclusions</a></li>
+<li><a href="#key-conclusions">Key Conclusions</a></li>
 </ul></li>
 <li><a href="#preparation">Preparation</a><ul>
 <li><a href="#data-retrieval">Data Retrieval</a></li>
 <li><a href="#data-pre-processing">Data Pre-Processing</a></li>
 </ul></li>
-<li><a href="#cross-validation-strategy">Cross-Validation Strategy</a></li>
-<li><a href="#model-building-and-validation">Model Building and Validation</a><ul>
-<li><a href="#prediction-modeling-for-in-sample-participants">Prediction modeling for “in-sample” participants</a></li>
-<li><a href="#prediction-modeling-for-out-of-sample-participants">Prediction modeling for “out-of-sample” participants</a></li>
+<li><a href="#model-validation-strategy">Model Validation Strategy</a></li>
+<li><a href="#model-building-and-testing">Model Building and Testing</a><ul>
+<li><a href="#prediction-for-in-sample-participants">Prediction for “in-sample” participants</a></li>
+<li><a href="#prediction-for-out-of-sample-participants">Prediction for “out-of-sample” participants</a></li>
 </ul></li>
-<li><a href="#conclusions-1">Conclusions</a></li>
+<li><a href="#discussion">Discussion</a><ul>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#avenues-for-future-investigation">Avenues for future investigation</a></li>
+</ul></li>
 <li><a href="#bibliography">Bibliography</a></li>
 </ul>
 </div>
@@ -149,13 +152,13 @@ $(document).ready(function () {
 <h1>Introduction</h1>
 <div id="background" class="section level3">
 <h3>Background</h3>
-<p>Using wearable devices like Fitbit, much data on personal activity can be collected cheaply. The goal of this exercise is to use data from motion sensors on the belt, forearm, arm, and dumbbell of 6 participants to recognize the manner in which they performed dumbbell lifts: whether they did a specified lift that was the same for all trials correctly (“A”), or in one of 4 specified incorrect ways (“B” through “D”). More information and data was available here as of 4/18/17: &lt;<a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a>&gt;. See the section <em>“Weight Lifting Exercise Dataset”</em> <span class="citation">(Velloso et al. 2013)</span>. Note that all information here that is drawn from the original study is licensed under Creative Commons (CC BY-SA): it can be used for any purpose as long as the original authors are cited.</p>
+<p>Using wearable devices like Fitbit, much data on personal activity can be collected cheaply. The goal of this exercise is to use data from motion sensors on the belt, forearm, arm, and dumbbell of 6 participants to recognize the manner in which they performed dumbbell lifts: i.e., whether they did a specific lift correctly (<code>classe</code> “A”), or in one of 4 specified incorrect ways (<code>classe</code> “B” through “E”). More information and data was available here as of 4/18/17: <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a>. See the section <em>“Weight Lifting Exercise Dataset”</em> <span class="citation">(Velloso et al. 2013)</span>. Note that all information drawn from the original study is licensed under Creative Commons (CC BY-SA): it can be used for any purpose as long as the original authors are cited.</p>
 </div>
-<div id="objectives" class="section level3">
-<h3>Objectives</h3>
+<div id="main-objectives" class="section level3">
+<h3>Main Objectives</h3>
 <ul>
-<li>Given training data extracted from the original study, build a model to recognize, based on sensor data, the manner (<code>classe</code>) in which each of the 6 participants did any given barbell lift</li>
-<li>In particular, predict the values (A through D) of 20 unlabeled observations in a testing dataset.</li>
+<li>Build a model to recognize, based on sensor data from the original study, the manner (“<code>classe</code>”) in which each of the 6 participants represented in the training and test data did a specific barbell lift on any given occasion. Below, we refer to this as the case of “in-sample” participants.</li>
+<li>In particular, predict the values (A through E) of 20 unlabeled observations in a testing dataset.</li>
 </ul>
 </div>
 <div id="report" class="section level3">
@@ -163,13 +166,13 @@ $(document).ready(function () {
 <p>This report describes key steps in the analysis, including rationale for key choices. Featured elements include:</p>
 <ul>
 <li>Model building</li>
-<li>Model validation</li>
+<li>Model validation strategy</li>
 <li>Expected out-of-sample error</li>
 </ul>
 </div>
-<div id="conclusions" class="section level3">
-<h3>Conclusions</h3>
-<p>A random forest model provides high prediction accuracy for “held out” observations of subjects who participate in model training (~ 99%), but low accuracy on completely new participants (~ 36%). Note, however, that due to lengthy computing times, we use the default model parameters, neglecting model tuning. From the literature, e.g. <span class="citation">Hastie, Tibshirani, and Friedman (2001)</span>, we guess that model tuning of parameter <code>mtry</code> (the number of variables evaluated for each split in the trees) might enhance performance in the ‘new participant’ case. Another option to investigate would be basing prediction on summary features used by the orginal authors, but not used in the test data for this assignment.</p>
+<div id="key-conclusions" class="section level3">
+<h3>Key Conclusions</h3>
+<p>A random forest model based on the data sampled at 45 Hz provides high prediction accuracy on “held out” observations of subjects who participate in model training (~ 99%), but relatively low accuracy on completely new participants (~ 37%).</p>
 </div>
 </div>
 <div id="preparation" class="section level1">
@@ -195,10 +198,10 @@ testing &lt;- read_csv(&quot;testing.csv&quot;, na = c(&quot;&quot;,&quot;NA&quo
 </div>
 <div id="data-pre-processing" class="section level3">
 <h3>Data Pre-Processing</h3>
-<p>Summary of the data via <code>str()</code> is omitted here due to length. The training data has 160 predictors and 19622 observations.</p>
+<p>Summary of the data via <code>str()</code> is omitted here due to length. The training data has 159 predictors and 19622 observations before pre-processing.</p>
 <pre class="r"><code>str(training, list.len = ncol(training), give.attr = FALSE)
 str(testing, list.len = ncol(testing), give.attr = FALSE)</code></pre>
-<p>In the original analysis, raw sensor signals were sampled at 45 Hz over windows of time from 0.5 to 2.5 seconds. Summary “features” (variable names in the dataset beginning with “<code>avg_</code>”, “<code>stddev_</code>”, “<code>kurtosis_</code>”, “<code>skewness_</code>”, etc.) were computed in post-processing of signals over each window. Both summary features and 45 Hz signals are provided in the training data, but the summary features are not provided in the test data. Therefore, the summary features are not useful for prediction on the test set and are excluded from the modelling. Additionally, no rows with <code>new_window == 'yes'</code>, which contain the summary features, appear in the test set, so these are also excluded. Finally, in the absence of contextual documentation, we see no way to make use of the “<code>_timestamp_</code>” or “<code>_window</code>” information in predicting test labels, therefore we exclude it, too. We use package <code>dplyr</code> to select only the remaining information.</p>
+<p>In the original analysis, raw sensor signals were sampled at 45 Hz over windows of time from 0.5 to 2.5 seconds. Summary “features” (variable names in the dataset beginning with “<code>avg_</code>”, “<code>stddev_</code>”, “<code>kurtosis_</code>”, “<code>skewness_</code>”, etc.) were computed in post-processing of signals over each window. Both summary features and 45 Hz signals are provided in the training data, but the summary features are not provided in the test data. Therefore, the summary features are not useful for prediction on the test set and are excluded from the modelling. Additionally, no rows with <code>new_window == 'yes'</code>, which contain the summary features, appear in the test set, so these are also excluded. Finally, in the absence of contextual documentation, we see no way to make use of the “<code>_timestamp_</code>” or “<code>_window</code>” information in predicting test labels, therefore we exclude it, too. We use package <code>dplyr</code> to omit the undesired variables.</p>
 <pre class="r"><code>if (!&quot;dplyr&quot; %in% rownames(installed.packages())) install.packages(&quot;dplyr&quot;); library(dplyr)
 
 training &lt;- filter(training,new_window!=&quot;yes&quot;)%&gt;%select(-c(X1,raw_timestamp_part_1:num_window,starts_with(
@@ -226,9 +229,11 @@ testing&lt;-select(testing,-c(X1,raw_timestamp_part_1:num_window,starts_with(&qu
 ## [53] &quot;magnet_forearm_z&quot;</code></pre>
 </div>
 </div>
-<div id="cross-validation-strategy" class="section level1">
-<h1>Cross-Validation Strategy</h1>
-<p>Based on the training data, we create a validation partition with which to assess performance. The <code>caret</code> package produces a partition stratified with respect to the 5 <code>classe</code> outcomes. Note that <code>caret</code> requires the <code>lattice</code> and <code>ggplot2</code> packages, by default.</p>
+<div id="model-validation-strategy" class="section level1">
+<h1>Model Validation Strategy</h1>
+<p>Based on the training data, we create a validation partition with which to assess performance on the “in-sample” participant predictions. To maximize the likelihood of providing unbiased model performance estimates, this data is ‘held-out’, and not used for model tuning. For tuning of certain model parameters, we rely on predictions from ‘out-of-bag’ observations from the remaining training data after holding out the validation partition.</p>
+<p>For assessing accuracy of the “out-of-sample” participant predictions, we use a cross-validation strategy on the training data (“Leave-one-participant-out cross-validation”). To keep the assessment fair, we refrain from any model tuning on this data.</p>
+<p>For assessment of the “in-sample” participant predictions, the <code>caret</code> package produces a partition stratified with respect to the 5 <code>classe</code> outcomes. Note that <code>caret</code> requires the <code>lattice</code> and <code>ggplot2</code> packages, by default.</p>
 <pre class="r"><code>if (!&quot;caret&quot; %in% rownames(installed.packages())) install.packages(&quot;caret&quot;)
 if (!&quot;lattice&quot; %in% rownames(installed.packages())) install.packages(&quot;lattice&quot;)
 if (!&quot;ggplot2&quot; %in% rownames(installed.packages())) install.packages(&quot;ggplot2&quot;)
@@ -239,81 +244,78 @@ inTrain &lt;- createDataPartition(y = training$classe, p = 0.7, list = FALSE)
 Train &lt;- training[inTrain,]
 Validation &lt;- training[-inTrain,]</code></pre>
 </div>
-<div id="model-building-and-validation" class="section level1">
-<h1>Model Building and Validation</h1>
-<div id="prediction-modeling-for-in-sample-participants" class="section level3">
-<h3>Prediction modeling for “in-sample” participants</h3>
-<p>Following the authors of the original paper, we attempt prediction based on random forests. Note that the formula interface for <code>randomForest()</code> is not used, as it generates high overhead when there are many variables, and that minimum <code>nodesize</code> is set to 10 (the default is 1). These steps were taken to make run times feasible. Below, the cumulative out-of-bag error is shown for every 25 trees, indicating that model performance is adequate by 500 (the default).</p>
+<div id="model-building-and-testing" class="section level1">
+<h1>Model Building and Testing</h1>
+<div id="prediction-for-in-sample-participants" class="section level3">
+<h3>Prediction for “in-sample” participants</h3>
+<p>Following the authors of the original paper, we predict based on random forests. Note that the <code>caret</code> formula interface for <code>randomForest()</code> is not used, as it generates high overhead when there are many variables (see <em>Note</em> in help file for the <code>randomForest</code> function), and that minimum <code>nodesize</code> is set to 10 (the default is 1). These steps were taken to keep computation times manageable.</p>
 <pre class="r"><code>if (!&quot;randomForest&quot; %in% rownames(installed.packages())) install.packages(&quot;randomForest&quot;)
 library(randomForest)
-set.seed(921)
-rfMod &lt;- randomForest(x=Train[,-54], y=Train$classe, proximity = FALSE, nodesize = 10, do.trace = 25)</code></pre>
-<pre><code>## ntree      OOB      1      2      3      4      5
-##    25:   1.72%  0.55%  2.84%  2.09%  2.68%  1.13%
-##    50:   1.21%  0.37%  1.81%  2.05%  1.86%  0.53%
-##    75:   1.03%  0.26%  1.81%  1.49%  1.72%  0.32%
-##   100:   0.91%  0.21%  1.46%  1.41%  1.59%  0.36%
-##   125:   0.85%  0.16%  1.34%  1.32%  1.59%  0.32%
-##   150:   0.79%  0.10%  1.15%  1.28%  1.59%  0.28%
-##   175:   0.77%  0.13%  1.15%  0.94%  1.72%  0.32%
-##   200:   0.73%  0.10%  0.96%  1.07%  1.68%  0.28%
-##   225:   0.73%  0.13%  1.00%  1.15%  1.54%  0.24%
-##   250:   0.71%  0.13%  0.92%  1.07%  1.59%  0.24%
-##   275:   0.70%  0.10%  0.92%  1.07%  1.54%  0.28%
-##   300:   0.70%  0.13%  0.96%  1.07%  1.45%  0.28%
-##   325:   0.71%  0.16%  0.96%  1.02%  1.50%  0.28%
-##   350:   0.71%  0.16%  0.88%  1.11%  1.50%  0.28%
-##   375:   0.69%  0.13%  0.85%  1.07%  1.50%  0.32%
-##   400:   0.71%  0.10%  0.92%  1.07%  1.50%  0.36%
-##   425:   0.74%  0.10%  0.96%  1.19%  1.50%  0.36%
-##   450:   0.74%  0.13%  0.96%  1.15%  1.54%  0.32%
-##   475:   0.74%  0.13%  0.96%  1.15%  1.50%  0.36%
-##   500:   0.69%  0.08%  0.88%  1.07%  1.50%  0.36%</code></pre>
-<p>We next compute the confusion matrix and associated statistics on the validation set. Performance appears quite good. Note that we find it necessary to reference <code>predict</code> by its package name - it doesn’t appear to be directly available in the namespace, at least with the current collection of packages loaded.</p>
-<pre class="r"><code>rfPred &lt;- randomForest:::predict.randomForest(rfMod, newdata = Validation[,-54], type = &quot;response&quot;)
+mtry_mult &lt;- c(0.5,1,1.5,2,2.5)
+p &lt;- length(Train[,-length(Train)]) # Not counting response variable `classe`
+mtry_vec &lt;- floor(mtry_mult*sqrt(p))
+ntree. = 800
+rfModl &lt;- vector(&quot;list&quot;,length(mtry_mult))
+OOBvTrees &lt;- data.frame(mtry = NULL, ntrees = NULL,OOB_error = NULL)
+for (i in 1:length(mtry_vec)) {
+        set.seed(921)
+        rfModl[[i]] &lt;- randomForest(x = Train[,-length(Train)], y = Train$classe, prox=FALSE, nodesize=10,
+                                  importance = FALSE, do.trace = 25, ntree = ntree., mtry = mtry_vec[i])
+        temp &lt;- data.frame(mtry = as.character(mtry_mult[i]), ntrees = 1:ntree., 
+                          OOB_error = rfModl[[i]]$err.rate[,1])
+        OOBvTrees &lt;- rbind(OOBvTrees, temp)
+}</code></pre>
+<p>We plot the OOB error as a function of number of trees for the different tested values of <code>mtry</code> (the number of variables randomly chosen to evaluate any given split within a tree), finding that <code>mtry</code> of 2 times <code>sqrt(number of predictors)</code> (<code>mtry =</code>14, after rounding down to the nearest integer) provides the lowest OOB error, and that the error rate appears to stabilize by 800 trees. In contrast, <code>mtry</code> of 0.5 times <code>sqrt(p)</code> (<code>mtry =</code>3) is clearly sub-optimal: model bias is too high, presumably due to infrequent access to the most relevant variables (<span class="citation">Hastie, Tibshirani, and Friedman (2001)</span>, page 600).</p>
+<pre class="r"><code>g &lt;- ggplot(data = OOBvTrees[OOBvTrees$ntrees &gt; 199,],aes(x=ntrees,y=OOB_error, color=mtry)) +
+        geom_line() + scale_y_continuous(labels = scales::percent) +
+        labs(title = &quot;Out-of-bag error for tested values of `mtry` (in units of sqrt(p))&quot;)
+print(g)</code></pre>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>We next compute the confusion matrix and associated statistics on the validation dataset. Performance appears quite good. Note that we find it necessary to reference <code>predict</code> by its package name: it doesn’t appear to be directly available in the namespace, at least with the current collection of packages loaded.</p>
+<pre class="r"><code>rfPred &lt;- randomForest:::predict.randomForest(rfModl[[4]], newdata = Validation[,-length(Train)], type = &quot;response&quot;)
 rfConf &lt;- confusionMatrix(rfPred, Validation$classe)
 rfConf</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1639   11    0    0    0
-##          B    2 1102    9    0    0
-##          C    0    2  996   24    1
-##          D    0    0    0  920    5
-##          E    0    0    0    0 1052
+##          A 1639   10    0    0    0
+##          B    2 1103    7    0    0
+##          C    0    2  997   12    1
+##          D    0    0    1  932    7
+##          E    0    0    0    0 1050
 ## 
 ## Overall Statistics
-##                                          
-##                Accuracy : 0.9906         
-##                  95% CI : (0.9878, 0.993)
-##     No Information Rate : 0.2847         
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
-##                                          
-##                   Kappa : 0.9881         
-##  Mcnemar's Test P-Value : NA             
+##                                           
+##                Accuracy : 0.9927          
+##                  95% CI : (0.9902, 0.9947)
+##     No Information Rate : 0.2847          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9908          
+##  Mcnemar's Test P-Value : NA              
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9988   0.9883   0.9910   0.9746   0.9943
-## Specificity            0.9973   0.9976   0.9943   0.9990   1.0000
-## Pos Pred Value         0.9933   0.9901   0.9736   0.9946   1.0000
-## Neg Pred Value         0.9995   0.9972   0.9981   0.9950   0.9987
+## Sensitivity            0.9988   0.9892   0.9920   0.9873   0.9924
+## Specificity            0.9976   0.9981   0.9968   0.9983   1.0000
+## Pos Pred Value         0.9939   0.9919   0.9852   0.9915   1.0000
+## Neg Pred Value         0.9995   0.9974   0.9983   0.9975   0.9983
 ## Prevalence             0.2847   0.1935   0.1744   0.1638   0.1836
-## Detection Rate         0.2844   0.1912   0.1728   0.1596   0.1825
-## Detection Prevalence   0.2863   0.1931   0.1775   0.1605   0.1825
-## Balanced Accuracy      0.9981   0.9930   0.9927   0.9868   0.9972</code></pre>
-<p>Finally, we compute the predicted values for the unlabeled testing data, which are kept hidden due to the plagiarism policy.</p>
-<pre class="r"><code>randomForest:::predict.randomForest(rfMod, newdata = testing, type = &quot;response&quot;)</code></pre>
+## Detection Rate         0.2844   0.1914   0.1730   0.1617   0.1822
+## Detection Prevalence   0.2861   0.1930   0.1756   0.1631   0.1822
+## Balanced Accuracy      0.9982   0.9937   0.9944   0.9928   0.9962</code></pre>
+<p>Finally, we compute the predicted values for the unlabeled testing data. These are kept hidden since they are answers to a graded assignment.</p>
+<pre class="r"><code>randomForest:::predict.randomForest(rfModl[[4]], newdata = testing, type = &quot;response&quot;)</code></pre>
 <div id="out-of-sample-error-for-in-sample-participants" class="section level4">
 <h4>Out-of-sample error for “in-sample” participants</h4>
-<p>Based on the above, we expect an out-of-sample error rate of <strong>0.94%</strong>. Note that this error rate is slightly higher than the ‘out-of-bag’ estimate of 0.69% from model training. This is probably just a statistical fluctuation: the difference is inside the 95% confidence interval provided in the confusion matrix results.</p>
+<p>Based on the above, we expect an out-of-sample error rate of <strong>0.73%</strong>. Note that this error rate is slightly higher than the ‘out-of-bag’ estimate of <strong>0.61%</strong> from model validation on OOB observations. This may be a statistical fluctuation: the difference is inside the 95% confidence interval provided in the confusion matrix results.</p>
 </div>
 </div>
-<div id="prediction-modeling-for-out-of-sample-participants" class="section level3">
-<h3>Prediction modeling for “out-of-sample” participants</h3>
-<p>Before closing, we use cross-validation to investigate the model’s accuracy on participants for which there is no training data. Performance is rather poor - the model fails to generalize to unknown participants. This seems a major limitation of this approach. We could try to ‘tune’ some of the parameters to improve performance (in particular, <code>mtry</code>) but this would probably only generate marginal improvements, and compute-time too excessive to perform the required iterations. Note: the original authors achieve accuracies on order ~ 75%, but they use the processed data we have discarded, not the raw signals we were forced to use by the structure of the test data.</p>
+<div id="prediction-for-out-of-sample-participants" class="section level3">
+<h3>Prediction for “out-of-sample” participants</h3>
+<p>Before closing, we use cross-validation to investigate the model’s accuracy on participants for which there is no training data. Performance is rather poor (~ 37% accuracy): the model fails to generalize to unknown participants. This seems a major limitation of this approach. We could try to ‘tune’ some of the parameters to improve performance (in particular, <code>mtry</code>) but this would probably only generate marginal improvements with inordinately long compute-times. Note that the original authors achieve accuracies on order ~ 75%, but they use the processed data we have discarded, not the raw signals we use to predict the assignment test data.</p>
 <pre class="r"><code>parts &lt;- c(&quot;adelmo&quot;,&quot;carlitos&quot;,&quot;charles&quot;,&quot;eurico&quot;,&quot;jeremy&quot;,&quot;pedro&quot;)
 
 rfPredLOPO_Tot &lt;- NULL
@@ -322,7 +324,7 @@ set.seed(309)
 for (i in 1:length(parts)){
         partTest &lt;- filter(training, user_name==parts[i]) %&gt;% select(-user_name)
         partTrain &lt;- filter(training, user_name!=parts[i]) %&gt;% select(-user_name)
-        rfModLOO&lt;-randomForest(x=select(partTrain,-classe),y=partTrain$classe,prox=FALSE,nodesize=10,do.trace= 20)
+        rfModLOO&lt;-randomForest(x=select(partTrain,-classe),y=partTrain$classe,prox=FALSE,nodesize=10,do.trace= 25)
         rfPredLOPO &lt;- randomForest:::predict.randomForest(rfModLOO, newdata=partTest, type = &quot;response&quot;)
         partTest_Tot &lt;- rbind(partTest_Tot, partTest)
         rfPredLOPO_Tot &lt;- c(rfPredLOPO_Tot,rfPredLOPO)
@@ -366,9 +368,23 @@ rfPredLOPO_Tot &lt;- factor(classelabels[rfPredLOPO_Tot], levels = classelabels)
 ## Balanced Accuracy      0.6558   0.6074  0.53891 0.509091   0.6651</code></pre>
 </div>
 </div>
-<div id="conclusions-1" class="section level1">
-<h1>Conclusions</h1>
-<p>The methods above provide high recognition performance for “in-sample” participants (overall error rate of <strong>0.94%</strong>). However, a training period per participant is implied. With overall error rate of <strong>63.1%</strong>, the model does not generalize well to “out-of-sample” participants.</p>
+<div id="discussion" class="section level1">
+<h1>Discussion</h1>
+<div id="summary" class="section level3">
+<h3>Summary</h3>
+<p>The methods above provide high recognition performance for “in-sample” participants (overall error rate of <strong>0.73%</strong>). However, a training period per participant is required.</p>
+<p>With overall error rate of <strong>63.1%</strong>, the model does not generalize well to “out-of-sample” participants. The error on out-of-sample participants is not that much lower than the error of ~ <strong>72%</strong>, obtained by always guessing (A), the most common value for <code>classe</code>.</p>
+</div>
+<div id="avenues-for-future-investigation" class="section level3">
+<h3>Avenues for future investigation</h3>
+<p>There are a number of potential strategies for improving prediction accuracy for out-of-sample participants. These include:</p>
+<ul>
+<li>Tuning the parameter <code>mtry</code> (the number of variables evaluated for each split in the trees), as in the “in-sample” participant case</li>
+<li>Tuning the parameter <code>nodesize</code>, the minimum number of observations allowed per terminal node (see <span class="citation">Hastie, Tibshirani, and Friedman (2001)</span>, page 598)</li>
+<li>Basing prediction on the computed summary features used by the original authors but not used in the test data for this assignment</li>
+<li>Trying another learning algorithm such as tree-based gradient boosting: it may enable superior performance in certain cases, such as when there are many irrelevant variables (<span class="citation">Hastie, Tibshirani, and Friedman (2001)</span>, page 597)</li>
+</ul>
+</div>
 </div>
 <div id="bibliography" class="section level1 unnumbered">
 <h1>Bibliography</h1>
