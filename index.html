@@ -248,7 +248,7 @@ Validation &lt;- training[-inTrain,]</code></pre>
 <h1>Model Building and Testing</h1>
 <div id="prediction-for-in-sample-participants" class="section level3">
 <h3>Prediction for “in-sample” participants</h3>
-<p>Following the authors of the original paper, we predict based on random forests. Note that the <code>caret</code> formula interface for <code>randomForest()</code> is not used, as it generates high overhead when there are many variables (see <em>Note</em> in help file for the <code>randomForest</code> function), and that minimum <code>nodesize</code> is set to 10 (the default is 1). These steps were taken to keep computation times manageable.</p>
+<p>Following the authors of the original paper, we predict based on random forests. Note that the <code>caret</code> formula interface for <code>randomForest()</code> is not used, as it generates high overhead when there are many variables (see <em>Note</em> in help file for the <code>randomForest</code> function), and that minimum <code>nodesize</code> is set to 10 (the default is 1). These steps were taken to keep computation times manageable. Below, to optimize accuracy of the model, we loop over different values of <code>mtry</code>, examining out-of-bag error for each value, and picking the highest performing value.</p>
 <pre class="r"><code>if (!&quot;randomForest&quot; %in% rownames(installed.packages())) install.packages(&quot;randomForest&quot;)
 library(randomForest)
 mtry_mult &lt;- c(0.5,1,1.5,2,2.5)

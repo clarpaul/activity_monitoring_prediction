@@ -114,7 +114,7 @@ Validation <- training[-inTrain,]
   
 ### Prediction for "in-sample" participants
 
-Following the authors of the original paper, we predict based on random forests.  Note that the `caret` formula interface for `randomForest()` is not used, as it generates high overhead when there are many variables (see *Note* in help file for the `randomForest` function), and that minimum `nodesize` is set to 10 (the default is 1).  These steps were taken to keep computation times manageable. 
+Following the authors of the original paper, we predict based on random forests.  Note that the `caret` formula interface for `randomForest()` is not used, as it generates high overhead when there are many variables (see *Note* in help file for the `randomForest` function), and that minimum `nodesize` is set to 10 (the default is 1).  These steps were taken to keep computation times manageable. Below, to optimize accuracy of the model, we loop over different values of `mtry`, examining out-of-bag error for each value, and picking the highest performing value.
 ```{r compute_model, cache = TRUE, message=FALSE, warning=FALSE, results='hide'}
 if (!"randomForest" %in% rownames(installed.packages())) install.packages("randomForest")
 library(randomForest)
