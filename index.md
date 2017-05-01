@@ -95,20 +95,19 @@ names(training)[-length(training)]
 ## [53] "magnet_forearm_z"
 ```
 
-# Model Validation Strategy
+# Model Tuning and Validation Strategy
 
-Based on the training data, we create a validation partition with which to assess performance on the "in-sample" participant predictions. To maximize the likelihood of providing unbiased model performance estimates, this data is 'held-out', and not used for model tuning. For tuning of certain model parameters, we rely on predictions from 'out-of-bag' observations from the remaining training data after holding out the validation partition.  
+Based on the training data, we create a `Validation` partition and a `Train` participation. The purpose of the `Train` partition is to teach the model to predict. The purpose of the `Validation` participation is to estimate performance of the model when applied to new data.  In work below, we also make use of another source of data, the "out-of-bag" ("OOB") data in random forest models.  These are subsets of the `Train` data that are not used to build any given tree: they are 'left out' of the bootstrap sample for building that tree, and can be used to assess model generalization performance.  Studies have shown that there is a systematic pessimistic bias to this method, but that 10-fold cross-validation is similarly biased, and the bias in both cases is small [@Bylander2002].
 
-For assessing accuracy of the "out-of-sample" participant predictions, we use a cross-validation strategy on the training data ("Leave-one-participant-out cross-validation").  To keep the assessment fair, we refrain from any model tuning on this data.
-  
-For assessment of the "in-sample" participant predictions, the `caret` package produces a partition stratified with respect to the 5 `classe` outcomes.  Note that `caret` requires the `lattice` and `ggplot2` packages, by default.
+In this study, our strategy for use of these three data sources differs between modeling for "in-sample" vs. "out-of-sample" participant activity recognition. For the case of in-sample participants, we use the `Train` partition to train the model, the *out-of-bag* data to tune its main hyperparameter, `mtry`, and the `Validation` partition to assess accuracy.  For the case of out-of-sample participants, we split the `Train` data into 6 folds (one per participant), and perform "leave-one-participant-out" cross-validation.  To avoid any overfitting from hyperparameter selection, we do _**no**_ model tuning in the out-of-sample case: the `randomForest` model is used with its default parameters.
+
+For assessment of the in-sample participant predictions, the `caret` package produces a partition stratified with respect to the 5 `classe` outcomes.  Note that `caret` requires the `lattice` and `ggplot2` packages, by default.
 
 ```r
 if (!"caret" %in% rownames(installed.packages())) install.packages("caret")
 if (!"lattice" %in% rownames(installed.packages())) install.packages("lattice")
 if (!"ggplot2" %in% rownames(installed.packages())) install.packages("ggplot2")
 library(caret)
-
 set.seed(1)
 inTrain <- createDataPartition(y = training$classe, p = 0.7, list = FALSE)
 Train <- training[inTrain,]
@@ -120,7 +119,7 @@ Validation <- training[-inTrain,]
   
 ### Prediction for "in-sample" participants
 
-Following the authors of the original paper, we predict based on random forests.  Note that the `caret` formula interface for `randomForest()` is not used, as it generates high overhead when there are many variables (see *Note* in help file for the `randomForest` function), and that minimum `nodesize` is set to 10 (the default is 1).  These steps were taken to keep computation times manageable. Below, to optimize accuracy of the model, we loop over different values of `mtry`, examining out-of-bag error for each value, and picking the highest performing value.
+Following the authors of the original paper, we predict based on random forests.  Minimum `nodesize` is set to 10 to keep computation times manageable (the default is 1), and to provide potential performance enhancement  (see @elements, page 598, for a regression example). Below, to optimize accuracy of the model, we loop over different values of `mtry` (the number of variables randomly chosen to evaluate any given split in a tree), examining out-of-bag error for each value, and picking the highest performing value.
 
 ```r
 if (!"randomForest" %in% rownames(installed.packages())) install.packages("randomForest")
@@ -131,16 +130,17 @@ mtry_vec <- floor(mtry_mult*sqrt(p))
 ntree. = 800
 rfModl <- vector("list",length(mtry_mult))
 OOBvTrees <- data.frame(mtry = NULL, ntrees = NULL,OOB_error = NULL)
+
 for (i in 1:length(mtry_vec)) {
         set.seed(921)
-        rfModl[[i]] <- randomForest(x = Train[,-length(Train)], y = Train$classe, prox=FALSE, nodesize=10,
-                                  importance = FALSE, do.trace = 25, ntree = ntree., mtry = mtry_vec[i])
-        temp <- data.frame(mtry = as.character(mtry_mult[i]), ntrees = 1:ntree., 
+        rfModl[[i]] <- randomForest(x=Train[,-length(Train)],y =Train$classe,prox=FALSE,do.trace=FALSE,
+                                nodesize=10, importance = FALSE, ntree = ntree., mtry = mtry_vec[i])
+        temp <- data.frame(mtry = rep(as.character(mtry_mult[i]),ntree.), ntrees = 1:ntree., 
                           OOB_error = rfModl[[i]]$err.rate[,1])
         OOBvTrees <- rbind(OOBvTrees, temp)
 }
 ```
-We plot the OOB error as a function of number of trees for the different tested values of `mtry` (the number of variables randomly chosen to evaluate any given split within a tree), finding that `mtry` of 2 times `sqrt(number of predictors)` (`mtry = `14, after rounding down to the nearest integer) provides the lowest OOB error, and that the error rate appears to stabilize by 800 trees. In contrast, `mtry` of 0.5 times `sqrt(p)` (`mtry = `3) is clearly sub-optimal: model bias is too high, presumably due to infrequent access to the most relevant variables (@elements, page 600).
+We plot the OOB error as a function of number of trees for the different tested values of `mtry`, finding that `mtry` of 2 times `sqrt(number of predictors)` (`mtry = `14, after rounding down to the nearest integer) provides the lowest *OOB* error, and that the error rate appears to stabilize by 800 trees. In contrast, `mtry` of 0.5 times `sqrt(p)` (`mtry = `3) is clearly sub-optimal: model bias is too high, presumably due to infrequent access to the most relevant variables (@elements, page 600).
 
 ```r
 g <- ggplot(data = OOBvTrees[OOBvTrees$ntrees > 199,],aes(x=ntrees,y=OOB_error, color=mtry)) +
@@ -217,7 +217,8 @@ set.seed(309)
 for (i in 1:length(parts)){
         partTest <- filter(training, user_name==parts[i]) %>% select(-user_name)
         partTrain <- filter(training, user_name!=parts[i]) %>% select(-user_name)
-        rfModLOO<-randomForest(x=select(partTrain,-classe),y=partTrain$classe,prox=FALSE,nodesize=10,do.trace= 25)
+        rfModLOO<-randomForest(x=select(partTrain,-classe),y=partTrain$classe,prox=FALSE,
+                               nodesize=10,do.trace= 25)
         rfPredLOPO <- randomForest:::predict.randomForest(rfModLOO, newdata=partTest, type = "response")
         partTest_Tot <- rbind(partTest_Tot, partTest)
         rfPredLOPO_Tot <- c(rfPredLOPO_Tot,rfPredLOPO)
@@ -285,7 +286,7 @@ There are a number of potential strategies for improving prediction accuracy for
   *  Tuning the parameter `mtry` (the number of variables evaluated for each split in the trees), as in the "in-sample" participant case
   *  Tuning the parameter `nodesize`, the minimum number of observations allowed per terminal node (see @elements, page 598)
   *  Basing prediction on the computed summary features used by the original authors but not used in the test data for this assignment
-  *  Trying another learning algorithm such as tree-based gradient boosting: it may enable superior performance in certain cases, such as when there are many irrelevant variables (@elements, page 597)
+  *  Trying another learning algorithm such as tree-based boosting: it may enable superior performance in certain cases, such as when there are many irrelevant variables (@elements, page 597)
 
 
 
