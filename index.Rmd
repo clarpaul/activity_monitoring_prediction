@@ -28,14 +28,10 @@ Using wearable devices like Fitbit, much data on personal activity can be collec
   
   *  Build a model to recognize, based on sensor data from the original study, the manner ("`classe`") in which each of the 6 participants represented in the training and test data did a specific barbell lift on any given occasion.  Below, we refer to this as the case of "in-sample" participants.
   * In particular, predict the values (A through E) of 20 unlabeled observations in a testing dataset.
-
-### Report
-
-This report describes key steps in the analysis, including rationale for key choices.  Featured elements include:
-
-  * Model building
-  * Model validation strategy
-  * Expected out-of-sample error
+  * Provide an overview of key steps in the analysis, including rationale for key choices. Feature elements including:
+    * Model building
+    * Model validation strategy
+    * Expected out-of-sample error
 
 ### Key Conclusions
 
@@ -91,7 +87,15 @@ names(training)[-length(training)]
 
 # Model Tuning and Validation Strategy
 
-Based on the training data, we create a `Validation` partition and a `Train` participation. The purpose of the `Train` partition is to teach the model to predict. The purpose of the `Validation` participation is to estimate performance of the model when applied to new data.  In work below, we also make use of another source of data, the "out-of-bag" ("OOB") data in random forest models.  These are subsets of the `Train` data that are not used to build any given tree: they are 'left out' of the bootstrap sample for building that tree, and can be used to assess model generalization performance.  Studies have shown that there is a systematic pessimistic bias to this method, but that 10-fold cross-validation is similarly biased, and the bias in both cases is small [@Bylander2002].
+Based on the training data, we create a `Validation` partition and a `Train` participation. The purpose of the `Train` partition is to teach the model to predict. The purpose of the `Validation` participation is to estimate performance of the model when applied to new data.  
+
+In work below, we also make use of another source of test data, the "out-of-bag" ("OOB") data in random forest models.  These are subsets of the `Train` data that are not used to build any given tree: they are 'left out' of the bootstrap sample for building that tree, and can be used to assess model generalization performance or to tune model hyperparameters. OOB error estimation is attractive because it is much more computationally efficient than cross-validation (the need to construct multiple versions of the random forest for multiple folds of testing is avoided). A careful study has shown that there may be a systematic pessimistic bias to the OOB error, but that 10-fold cross-validation is similarly biased, and the bias in both cases is small [@Bylander2002]. We found no studies that evaluate the variance of OOB error estimates, but random forest creator Leo Breiman makes the following summary comments about OOB error [@Breiman2001]:  
+
+> Tibshirani [@Tibshirani96bias-variance] used out-of-bag estimates of variance to estimate generalization
+> error for arbitrary classifiers. The study of error estimates for bagged classifiers in Breiman
+> [@Statistics_out-of-bagestimation], gives empirical evidence to show that the outof-bag estimate is
+> as accurate as using a test set of the same size as the training set. Therefore, using the out-of-bag
+> error estimate removes the need for a set aside test set.
 
 In this study, our strategy for use of these three data sources differs between modeling for "in-sample" vs. "out-of-sample" participant activity recognition. For the case of in-sample participants, we use the `Train` partition to train the model, the *out-of-bag* data to tune its main hyperparameter, `mtry`, and the `Validation` partition to assess accuracy.  For the case of out-of-sample participants, we split the `Train` data into 6 folds (one per participant), and perform "leave-one-participant-out" cross-validation.  To avoid any overfitting from hyperparameter selection, we do _**no**_ model tuning in the out-of-sample case: the `randomForest` model is used with its default parameters.
 
