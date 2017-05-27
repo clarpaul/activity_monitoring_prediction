@@ -1,4 +1,8 @@
-## Welcome to GitHub Pages
+## Welcome to Activity Monitoring Prediction
+
+The address at which to view the main document in this repo as a web-page is: https://clarpaul.github.io/activity_monitoring_prediction/.
+
+## Boiler-plate template
 
 You can use the [editor on GitHub](https://github.com/clarpaul/activity_monitoring_prediction/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
